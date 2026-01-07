@@ -1,5 +1,5 @@
 {
-  "name": "document-metadata-extractor",
+  "name": "@xcvzmoon/document-metadata-extractor",
   "version": "1.0.0",
   "description": "Metadata extractor for document files",
   "keywords": [
