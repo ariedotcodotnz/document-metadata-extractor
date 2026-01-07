@@ -9,11 +9,11 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 
-export type PdfMetadata = Promise<
-  Awaited<ReturnType<Awaited<ReturnType<typeof getDocumentProxy>>['getMetadata']>> & {
-    pages: number;
-  }
->;
+export type PdfMetadata = Awaited<
+  ReturnType<Awaited<ReturnType<typeof getDocumentProxy>>['getMetadata']>
+> & {
+  pages: number;
+};
 
 export type ExcelMetadata = {
   sheets: string[];
@@ -46,16 +46,15 @@ export type DocxMetadata = {
   fileSize: number;
 };
 
-export async function getPdfMetadata(data: ArrayBuffer): PdfMetadata {
+async function getPdfMetadata(data: Buffer) {
   const arrayBuffer = new Uint8Array(data);
   const pdf = await getDocumentProxy(arrayBuffer);
   const metadata = await pdf.getMetadata();
   const pages = pdf.numPages;
-
-  return { ...metadata, pages };
+  return { ...metadata, pages } as PdfMetadata;
 }
 
-export async function getImageMetadata(data: Buffer) {
+async function getImageMetadata(data: Buffer) {
   await using et = new ExifTool();
   const path = join(tmpdir(), `exif-${randomUUID()}`);
 
@@ -68,7 +67,7 @@ export async function getImageMetadata(data: Buffer) {
   }
 }
 
-export function getExcelMetadata(data: Buffer) {
+function getExcelMetadata(data: Buffer) {
   const workbook = xlsx.read(data, {
     type: 'buffer',
     cellDates: true,
@@ -102,7 +101,7 @@ export function getExcelMetadata(data: Buffer) {
   };
 }
 
-export async function getDocxMetadata(data: Buffer) {
+async function getDocxMetadata(data: Buffer) {
   const zip = await jszip.loadAsync(data);
   const core = await zip.file('docProps/core.xml')?.async('string');
   const app = await zip.file('docProps/app.xml')?.async('string');
@@ -149,4 +148,31 @@ export async function getDocxMetadata(data: Buffer) {
 function getTextContent(document: Document, tagName: string): string | undefined {
   const elements = document.getElementsByTagName(tagName);
   return elements.length > 0 ? elements[0].textContent || undefined : undefined;
+}
+
+export async function getMetadata(
+  data: Buffer,
+  options: { target: 'image' | 'pdf' | 'docx' | 'excel' | 'pptx' },
+) {
+  switch (options.target) {
+    case 'pdf':
+      const pdfMetadata = await getPdfMetadata(data);
+      return pdfMetadata;
+
+    case 'image':
+      const imageMetadata = await getImageMetadata(data);
+      return imageMetadata;
+
+    case 'excel':
+      const excelMetadata = getExcelMetadata(data);
+      return excelMetadata;
+
+    case 'docx':
+      const docxMetadata = await getDocxMetadata(data);
+      return docxMetadata;
+
+    case 'pptx':
+      const pptxMetadata = await getDocxMetadata(data);
+      return pptxMetadata;
+  }
 }
