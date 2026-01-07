@@ -9,18 +9,27 @@
     "pptx",
     "word"
   ],
-  "license": "MIT",
+  "license": "ISC",
   "author": {
     "name": "Mon Albert Gamil",
     "email": "mrgamilmonalbert@gmail.com",
     "url": "https://github.com/xcvzmoon/"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "scripts": {
     "format": "oxfmt && oxfmt --check",
     "lint": "oxlint --type-aware",
     "dev": "tsx watch src/index.ts",
-    "build": "tsdown --config tsdown.config.ts"
+    "build": "tsdown --config tsdown.config.ts",
+    "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
