@@ -29,7 +29,7 @@
     "lint": "oxlint --type-aware",
     "dev": "tsx watch src/index.ts",
     "build": "tsdown --config tsdown.config.ts",
-    "release:bump": "pnpm dlx changelogen@latest --bump",
+    "changelog:bump": "pnpm dlx changelogen@latest --bump",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
