@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "pnpm-lock.yaml",
+    "package-lock.json",
+    ".DS_Store",
+    ".env*",
+    ".vscode",
+  ],
+}
