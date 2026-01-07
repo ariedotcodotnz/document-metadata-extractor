@@ -32,6 +32,7 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
+    "exiftool-vendored": "^34.3.0",
     "unpdf": "^1.4.0"
   },
   "devDependencies": {

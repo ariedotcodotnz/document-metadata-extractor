@@ -1,4 +1,9 @@
 import { getDocumentProxy } from 'unpdf';
+import { ExifTool } from 'exiftool-vendored';
+import { writeFile, unlink } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { randomUUID } from 'crypto';
 
 export type PdfMetadata = Promise<
   Awaited<ReturnType<Awaited<ReturnType<typeof getDocumentProxy>>['getMetadata']>> & {
@@ -13,4 +18,17 @@ export async function getPdfMetadata(data: ArrayBuffer): PdfMetadata {
   const pages = pdf.numPages;
 
   return { ...metadata, pages };
+}
+
+export async function getImageMetadata(data: Buffer) {
+  await using et = new ExifTool();
+  const path = join(tmpdir(), `exif-${randomUUID()}`);
+
+  try {
+    await writeFile(path, data);
+    const tags = await et.read(path);
+    return tags;
+  } finally {
+    await unlink(path);
+  }
 }
