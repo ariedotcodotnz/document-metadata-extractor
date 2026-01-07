@@ -32,7 +32,9 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.8.11",
     "exiftool-vendored": "^34.3.0",
+    "jszip": "^3.10.1",
     "unpdf": "^1.4.0",
     "xlsx": "^0.18.5"
   },

@@ -1,5 +1,7 @@
 import * as xlsx from 'xlsx';
+import jszip from 'jszip';
 
+import { DOMParser } from '@xmldom/xmldom';
 import { getDocumentProxy } from 'unpdf';
 import { ExifTool } from 'exiftool-vendored';
 import { writeFile, unlink } from 'fs/promises';
@@ -23,6 +25,24 @@ export type ExcelMetadata = {
   created?: Date;
   modified?: Date;
   company?: string;
+  fileSize: number;
+};
+
+export type DocxMetadata = {
+  title?: string;
+  subject?: string;
+  creator?: string;
+  keywords?: string;
+  description?: string;
+  lastModifiedBy?: string;
+  revision?: string;
+  created?: Date;
+  modified?: Date;
+  category?: string;
+  company?: string;
+  pageCount?: number;
+  wordCount?: number;
+  characterCount?: number;
   fileSize: number;
 };
 
@@ -80,4 +100,53 @@ export function getExcelMetadata(data: Buffer) {
     company: props.Company,
     fileSize: data.length,
   };
+}
+
+export async function getDocxMetadata(data: Buffer) {
+  const zip = await jszip.loadAsync(data);
+  const core = await zip.file('docProps/core.xml')?.async('string');
+  const app = await zip.file('docProps/app.xml')?.async('string');
+  const metadata: DocxMetadata = { fileSize: data.length };
+
+  if (core) {
+    const parser = new DOMParser();
+    const document = parser.parseFromString(core, 'text/xml');
+
+    metadata.title = getTextContent(document, 'dc:title');
+    metadata.subject = getTextContent(document, 'dc:subject');
+    metadata.creator = getTextContent(document, 'dc:creator');
+    metadata.keywords = getTextContent(document, 'cp:keywords');
+    metadata.description = getTextContent(document, 'dc:description');
+    metadata.lastModifiedBy = getTextContent(document, 'cp:lastModifiedBy');
+    metadata.revision = getTextContent(document, 'cp:revision');
+    metadata.category = getTextContent(document, 'cp:category');
+
+    const created = getTextContent(document, 'dcterms:created');
+    const modified = getTextContent(document, 'dcterms:modified');
+
+    if (created) metadata.created = new Date(created);
+    if (modified) metadata.modified = new Date(modified);
+  }
+
+  if (app) {
+    const parser = new DOMParser();
+    const document = parser.parseFromString(app, 'text/xml');
+
+    metadata.company = getTextContent(document, 'Company');
+
+    const pages = getTextContent(document, 'Pages');
+    const words = getTextContent(document, 'Words');
+    const characters = getTextContent(document, 'Characters');
+
+    if (pages) metadata.pageCount = parseInt(pages);
+    if (words) metadata.wordCount = parseInt(words);
+    if (characters) metadata.characterCount = parseInt(characters);
+  }
+
+  return metadata;
+}
+
+function getTextContent(document: Document, tagName: string): string | undefined {
+  const elements = document.getElementsByTagName(tagName);
+  return elements.length > 0 ? elements[0].textContent || undefined : undefined;
 }
